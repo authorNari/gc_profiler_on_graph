@@ -37,8 +37,10 @@ module GCProfilerOnGraph
       </script>
       HTML
       canvas_html = <<-HTML
-      <div><canvas width="600" height="500" id="heap_vbar"></canvas></div>
-      <div><canvas width="600" height="500" id="gctime_line"></canvas></div>
+      <table><tr>
+      <td><div><canvas width="600" height="500" id="heap_vbar"></canvas></div></td>
+      <td><div><canvas width="600" height="500" id="gctime_line"></canvas></div></td>
+      </tr></table>
       HTML
       insert_text :before, /<\/head>/i, script_html
       insert_text :before, /<\/body>/i, canvas_html
