@@ -21,25 +21,36 @@ module GCProfilerOnGraph
       <script type="text/javascript">
       window.onload = function() {
         var heap_graph = new html5jp.graph.vbar("heap_vbar");
-        if( ! heap_graph ) { return; }
+        if(!heap_graph ) { return; }
 
         #{display_draw_heap_params(profile)}
 
         heap_graph.draw(items, params);
 
+
         var gctime_graph = new html5jp.graph.line("gctime_line");
-        if( ! gctime_graph ) { return; }
+        if(!gctime_graph ) { return; }
 
         #{display_draw_gctime_params(profile)}
 
         gctime_graph.draw(items, params);
+
+        var stats_graph = new html5jp.graph.vbar("stats_vbar");
+        if(!stats_graph ) { return; }
+
+        #{display_draw_heap_stats_params}
+
+        stats_graph.draw(items, params);
       };     
       </script>
       HTML
       canvas_html = <<-HTML
       <table><tr>
-      <td><div><canvas width="600" height="500" id="heap_vbar"></canvas></div></td>
-      <td><div><canvas width="600" height="500" id="gctime_line"></canvas></div></td>
+      <td colspan="3"><div><canvas width="1300" height="400" id="stats_vbar"></canvas></div></td>
+      </tr><tr>
+      <td><div><canvas width="500" height="400" id="heap_vbar"></canvas></div></td>
+      <td><div><canvas width="500" height="400" id="gctime_line"></canvas></div></td>
+      <td></td>
       </tr></table>
       HTML
       insert_text :before, /<\/head>/i, script_html
@@ -75,6 +86,13 @@ module GCProfilerOnGraph
     def self.display_draw_gctime_params(profile)
       res =  template_items "['gc time', #{profile[:gc_time].join(', ')}]"
       res += template_xy("['count', #{profile[:index].join(', ')}]", "['time(msec)']")
+    end
+
+    def self.display_draw_heap_stats_params
+      res = []
+      stats = ObjectSpace.count_objects.reject!{|k, v| %w(TOTAL FREE).include? k.to_s }.sort_by{|e| e[1]}
+      res = template_items "['object count', #{stats.map{|k,v| v}.join(', ')}]"
+      res += template_xy(%Q!['type', "#{stats.map{|k, v| k}.join('", "')}"]!, "['object count']")
     end
 
     def self.template_items(cols)
