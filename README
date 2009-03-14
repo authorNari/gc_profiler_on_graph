@@ -6,11 +6,15 @@ GC::Profiler module was added at ruby1.9.1.
 == Install
 
   > git clone git://github.com/authorNari/gc_profiler_on_graph.git vendor/plugins/gc_profiler_on_graph
-  > ruby script/runner vendor/plugins/gc_profiler_on_graph
+  > ruby script/runner vendor/plugins/gc_profiler_on_graph/install.rb
 
 If you use Rails 2.1 or later, you can install with this command.
 
   > ruby script/plugin install git://github.com/authorNari/gc_profiler_on_graph.git
+
+And please wirtten to layout/xxxx.html.erb
+
+  <%= javascript_include_tag :all %>
 
 = Author
 Nakamura Narirhiro<authorNari at gmail.com>

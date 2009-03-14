@@ -20,27 +20,10 @@ module GCProfilerOnGraph
       script_html = <<-HTML
       <script type="text/javascript">
       window.onload = function() {
-        var heap_graph = new html5jp.graph.vbar("heap_vbar");
-        if(!heap_graph ) { return; }
-
-        #{display_draw_heap_params(profile)}
-
-        heap_graph.draw(items, params);
-
-
-        var gctime_graph = new html5jp.graph.line("gctime_line");
-        if(!gctime_graph ) { return; }
-
-        #{display_draw_gctime_params(profile)}
-
-        gctime_graph.draw(items, params);
-
-        var stats_graph = new html5jp.graph.vbar("stats_vbar");
-        if(!stats_graph ) { return; }
-
-        #{display_draw_heap_stats_params}
-
-        stats_graph.draw(items, params);
+        #{template_draw_graph(:heap_vbar, :vbar){ display_draw_heap_params(profile) }}
+        #{template_draw_graph(:gctime_line, :line){ display_draw_gctime_params(profile) }}
+        #{template_draw_graph(:stats_vbar, :vbar){ display_draw_heap_stats_params }}
+        #{template_draw_graph(:lifetime_vbar, :vbar){ display_draw_lifetimes } if ObjectSpace.respond_to?(:count_object_lifetimes)}
       };     
       </script>
       HTML
@@ -48,9 +31,12 @@ module GCProfilerOnGraph
       <table><tr>
       <td colspan="3"><div><canvas width="1300" height="400" id="stats_vbar"></canvas></div></td>
       </tr><tr>
+      <td colspan="3"><div><canvas width="1300" height="400" id="lifetime_vbar"></canvas></div></td>
+      </tr><tr>
       <td><div><canvas width="500" height="400" id="heap_vbar"></canvas></div></td>
       <td><div><canvas width="500" height="400" id="gctime_line"></canvas></div></td>
       <td></td>
+      </tr><tr>
       </tr></table>
       HTML
       insert_text :before, /<\/head>/i, script_html
@@ -95,6 +81,13 @@ module GCProfilerOnGraph
       res += template_xy(%Q!['type', "#{stats.map{|k, v| k}.join('", "')}"]!, "['object count']")
     end
 
+    def self.display_draw_lifetimes
+      res = []
+      stats = ObjectSpace.count_object_lifetimes.reject!{|k, v| %w(TOTAL FREE).include? k.to_s }.sort_by{|e| e[1]}
+      res = template_items "['lifetime', #{stats.map{|k,v| v}.join(', ')}]"
+      res += template_xy(%Q!['type', "#{stats.map{|k, v| k}.join('", "')}"]!, "['life time']")
+    end
+
     def self.template_items(cols)
       res = <<-HTML
       var items = [
@@ -109,6 +102,18 @@ module GCProfilerOnGraph
         x: #{x}, 
         y: #{y}
       };
+      HTML
+    end
+
+    def self.template_draw_graph(id, type, &block)
+      graph_var = "#{id}_graph"
+      res = <<-HTML
+      var #{graph_var} = new html5jp.graph.#{type}("#{id}");
+      if(!#{graph_var} ) { return; }
+
+      #{block.call}
+
+      #{graph_var}.draw(items, params);
       HTML
     end
 
